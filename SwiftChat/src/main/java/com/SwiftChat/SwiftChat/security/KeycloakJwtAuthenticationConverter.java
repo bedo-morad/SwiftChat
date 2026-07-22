@@ -35,7 +35,7 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
         var eternal = (Map<String, List<String>>)resourceAccess.get("account");
         var roles = eternal.get("roles");
         return roles.stream()
-                .map(role -> new SimpleGrantedAuthority("Role_" + role.replace("-","_")))
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.replace("-","_")))
                 .collect(Collectors.toSet());
     }
 }
