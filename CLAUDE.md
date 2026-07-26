@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The Maven project is **nested one level down**: the repo root holds `docker-compose.yml`, while the
 actual Spring Boot application (with `pom.xml` and the Maven wrapper) lives in `SwiftChat/`.
-Run all Maven commands from `SwiftChat/SwiftChat/`, not the repo root.
+Run all Maven commands from `SwiftChat/`, not the repo root.
 
 ## Commands
 
@@ -39,8 +39,8 @@ consumes this API.
 
 ## Architecture
 
-Spring Boot 4.1.0 backend (Java 17) for a chat application. Only the security layer is implemented so
-far; there are no entities, controllers, or WebSocket handlers yet.
+Spring Boot 4.1.0 backend (Java 17) for a chat application. The security layer and the core JPA
+domain model are implemented; there are no controllers or WebSocket handlers yet.
 
 - **Authentication** is stateless JWT via Keycloak. `SecurityConfig` disables CSRF, wires the CORS
   filter, and permits Swagger endpoints plus `/ws/**` (WebSocket handshake) while requiring auth on
@@ -48,6 +48,22 @@ far; there are no entities, controllers, or WebSocket handlers yet.
 - **Role mapping** — `KeycloakJwtAuthenticationConverter` merges Spring's default scope authorities
   with Keycloak roles. Note it reads roles from `resource_access.account.roles` specifically (the
   `account` client), prefixes each with `ROLE_`, and replaces hyphens with underscores.
+- **Domain model** — three entities under `chat/`, `message/`, `user/`, all extending
+  `common/BaseAuditingEntity` (a `@MappedSuperclass` with `createdDate`/`lastModifiedDate` populated
+  by `AuditingEntityListener`; `@EnableJpaAuditing` is on `SwiftChatApplication`):
+  - `User` — id is an externally assigned String (no `@GeneratedValue`; the named queries call it
+    `publicId`). `isUserOnline()` is `@Transient`
+    and treats the user as online if `lastSeen` is within the last 5 minutes.
+  - `Chat` — a 1:1 conversation between `sender` and `recipient` (both `@ManyToOne` to User).
+    `messages` is `FetchType.EAGER` with `@OrderBy("createdDate DESC")`, so `messages.get(0)` is the
+    newest message (used by `getLastMessage`/`getLastMessageTime`). `getUnreadMessagesCount` =
+    messages addressed to the given senderId with state `SENT`.
+  - `Message` — sequence-generated `Long` id (`msg_seq`), `content` is `TEXT`, `state`
+    (`SENT`/`SEEN`) and `type` (`TEXT`/`IMAGE`/`AUDIO`/`VIDEO`) are `@Enumerated(STRING)`.
+    Sender/receiver are stored as plain String id columns, not relations.
+- **Named queries** — JPQL `@NamedQuery` annotations live on the entities; their string names are
+  held in sibling `*Constants` classes (e.g. `ChatConstants.FIND_CHAT_BY_SENDER_ID`). Reference the
+  constants, not the literals, when using them from repositories.
 
 ### Schema management caveat
 
