@@ -76,3 +76,14 @@ startup. If migrations are introduced later, switch `ddl-auto` to `validate` and
 - **Lombok** is used for boilerplate; it is configured as an annotation processor in `pom.xml` and
   excluded from the packaged jar.
 - File uploads are capped at 50MB and written to `./upload` (`application.file.uploads.media-output-path`).
+
+## Project notes
+
+`project-notes/` holds two agent-maintained knowledge stores. Each has a `README.md` with the
+exact naming rules, file conventions, and style rules — read the relevant one before writing:
+
+- **`project-notes/ideas/`** — post-v1 ideas (things to maybe add after launch, not current tasks).
+  When the user asks to add an idea (e.g. "add to ideas: ..."), follow `project-notes/ideas/README.md`.
+- **`project-notes/knowledge/`** — saved design conversations (the *why* behind decisions).
+  When the user asks to save a conversation (e.g. "save this, the topic is '...'"), follow
+  `project-notes/knowledge/README.md`.
