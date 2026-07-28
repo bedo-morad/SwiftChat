@@ -13,7 +13,7 @@ import java.util.Optional;
 @Slf4j
 public class UserSynchronizer {
 
-    private final UserRepo userRepo;
+    private final UserRepository userRepository;
     private final UserMapper userMapper;
 
 
@@ -22,11 +22,11 @@ public class UserSynchronizer {
         getUserEmail(token).ifPresent(userEmail->{
             log.info("Synchronizing user having email {}", userEmail);
             // commented out because we are now using the sub claim as the unique identifier for users instead of email
-//            Optional<User> optUser = userRepo.findByEmail(userEmail);
+//            Optional<User> optUser = userRepository.findByEmail(userEmail);
             User user = userMapper.fromTokenAttributes(token.getClaims());
             // commented for same reason so we don't duplicate
 //            optUser.ifPresent(value -> user.setId(optUser.get().getId()));
-            userRepo.save(user);
+            userRepository.save(user);
         });
     }
 

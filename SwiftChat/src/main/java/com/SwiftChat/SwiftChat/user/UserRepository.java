@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface UserRepo extends JpaRepository<User,String> {
+public interface UserRepository extends JpaRepository<User,String> {
 
     @Query(UserConstants.FIND_USER_BY_EMAIL)
     Optional<User> findByEmail(@Param("email") String userEmail);
