@@ -1,4 +1,3 @@
----
 **user**
 
 hey can you have a look at "SwiftChat/src/main/java/com/SwiftChat/SwiftChat/user/UserSynchronizer.java" and explain it to me

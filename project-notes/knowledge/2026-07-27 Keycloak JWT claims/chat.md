@@ -1,4 +1,3 @@
----
 **user**
 
 no take another look at "SwiftChat/src/main/java/com/SwiftChat/SwiftChat/user/UserMapper.java"and explain it to me don't do line by line explanation i want to understand how this works with keycloak because i used other Mappers and they didn't look like this
