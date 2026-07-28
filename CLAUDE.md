@@ -64,6 +64,10 @@ domain model are implemented; there are no controllers or WebSocket handlers yet
 - **Named queries** — JPQL `@NamedQuery` annotations live on the entities; their string names are
   held in sibling `*Constants` classes (e.g. `ChatConstants.FIND_CHAT_BY_SENDER_ID`). Reference the
   constants, not the literals, when using them from repositories.
+- **User synchronization** — `UserSynchronizerFilter` (`OncePerRequestFilter`) runs on every
+  authenticated request and upserts the `User` via `UserSynchronizer`. The JWT `sub` claim is the
+  user id (not email — see comments in `UserSynchronizer`). `UserMapper` maps
+  `sub`/`given_name`/`nickname`/`family_name`/`email` claims to the entity.
 
 ### Schema management caveat
 
