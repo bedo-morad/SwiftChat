@@ -40,9 +40,8 @@ consumes this API.
 ## Architecture
 
 Spring Boot 4.1.0 backend (Java 17) for a chat application. The security layer, the core JPA domain
-model, and the chat and message REST slices are implemented. Still missing: WebSocket handlers, the
-notification system (`//todo notification` markers throughout `MessageService`), and a real
-`FileService` implementation.
+model, the chat and message REST slices, and file storage are implemented. Still missing: WebSocket
+handlers and the notification system (`//todo notification` markers throughout `MessageService`).
 
 - **Authentication** is stateless JWT via Keycloak. `SecurityConfig` disables CSRF, wires the CORS
   filter, and permits Swagger endpoints plus `/ws/**` (WebSocket handshake) while requiring auth on
@@ -92,9 +91,18 @@ notification system (`//todo notification` markers throughout `MessageService`),
   - `setMessagesToSeen` is `@Transactional` because the underlying named query is a bulk
     `@Modifying` update; it currently marks *all* messages in the chat as seen, not just those
     addressed to the caller (the `recipientId` filter is commented out pending notifications).
-  - `uploadMessageMedia` hardcodes `MessageType.IMAGE` regardless of the uploaded file's type, and
-    `FileService.saveFile` is a stub returning `null`, so `mediaFilePath` is always null for now.
-    `MessageMapper` likewise has a `//todo` where it should populate `MessageResponse.media`.
+  - `uploadMessageMedia` hardcodes `MessageType.IMAGE` regardless of the uploaded file's type.
+  - `MessageMapper` populates `MessageResponse.media` by reading the file back off disk via
+    `FileUtils.readFileFromLocation(mediaFilePath)` — so every `GET /chat/{chatId}` loads the full
+    bytes of every media message in the chat into the response.
+- **File storage** — `file/` has two classes:
+  - `FileService.saveFile(file, senderId)` writes to
+    `<media-output-path>/users/<senderId>/<currentTimeMillis>.<ext>`, creating directories as needed,
+    and returns the absolute-ish path stored in `Message.mediaFilePath`. The extension comes from the
+    original filename (lowercased, empty if absent). It never throws: a failed `mkdirs` or an
+    `IOException` is logged and `null` is returned, so callers must tolerate a null path.
+  - `FileUtils` is a static-only helper (private constructor); `readFileFromLocation` returns an empty
+    `byte[]` for a blank path or a read failure, again logging rather than throwing.
 - **User synchronization** — `UserSynchronizerFilter` (`OncePerRequestFilter`) runs on every
   authenticated request and upserts the `User` via `UserSynchronizer`. The JWT `sub` claim is the
   user id (not email — see comments in `UserSynchronizer`). `UserMapper` maps
@@ -110,8 +118,11 @@ startup. If migrations are introduced later, switch `ddl-auto` to `validate` and
 
 - **Lombok** is used for boilerplate; it is configured as an annotation processor in `pom.xml` and
   excluded from the packaged jar.
-- File uploads are capped at 50MB and written to `./upload` (`application.file.uploads.media-output-path`).
-  `file/FileService.saveFile` is the single seam for this and is still an unimplemented stub.
+- File uploads are capped at 50MB and written to `./upload` (`application.file.uploads.media-output-path`),
+  under a per-sender subfolder. `file/FileService` is the single seam for writes, `file/FileUtils` for reads.
+- **Failure style in `file/`** — both classes log and return a falsy value (`null` / empty array)
+  instead of throwing, so I/O problems surface as a missing media path or empty `media` bytes rather
+  than an error response.
 
 ## Project notes
 

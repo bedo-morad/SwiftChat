@@ -1,5 +1,6 @@
 package com.SwiftChat.SwiftChat.message;
 
+import com.SwiftChat.SwiftChat.file.FileUtils;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,7 +14,7 @@ public class MessageMapper {
                 .recipientId(message.getRecipientId())
                 .state(message.getState())
                 .createdAt(message.getCreatedDate())
-                //todo get media file
+                .media(FileUtils.readFileFromLocation(message.getMediaFilePath()))
                 .build();
     }
 }
