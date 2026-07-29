@@ -40,8 +40,9 @@ consumes this API.
 ## Architecture
 
 Spring Boot 4.1.0 backend (Java 17) for a chat application. The security layer, the core JPA domain
-model, and the chat REST slice are implemented; there are no message endpoints and no WebSocket
-handlers yet.
+model, and the chat and message REST slices are implemented. Still missing: WebSocket handlers, the
+notification system (`//todo notification` markers throughout `MessageService`), and a real
+`FileService` implementation.
 
 - **Authentication** is stateless JWT via Keycloak. `SecurityConfig` disables CSRF, wires the CORS
   filter, and permits Swagger endpoints plus `/ws/**` (WebSocket handshake) while requiring auth on
@@ -61,12 +62,13 @@ handlers yet.
     messages addressed to the given senderId with state `SENT`.
   - `Message` — sequence-generated `Long` id (`msg_seq`), `content` is `TEXT`, `state`
     (`SENT`/`SEEN`) and `type` (`TEXT`/`IMAGE`/`AUDIO`/`VIDEO`) are `@Enumerated(STRING)`.
-    Sender/receiver are stored as plain String id columns, not relations.
+    `senderId`/`recipientId` are plain String id columns, not relations. `mediaFilePath` holds the
+    on-disk path for media messages (the bytes are never stored in the DB).
 - **Named queries** — JPQL `@NamedQuery` annotations live on the entities; their string names are
   held in sibling `*Constants` classes (e.g. `ChatConstants.FIND_CHAT_BY_SENDER_ID`). Reference the
   constants, not the literals, when using them from repositories. Because the constants are *names*,
   repository methods must use `@Query(name = Xxx.CONSTANT)` — plain `@Query(Xxx.CONSTANT)` would be
-  parsed as JPQL (`UserRepository.findUserByEmail` currently has this bug).
+  parsed as JPQL. All repositories now do this correctly.
 - **REST layer** — one package per slice; `chat/` is the reference shape:
   `ChatController` (`/api/v1/chats`) → `ChatService` → `ChatMapper` (a `@Service`, not MapStruct) →
   `ChatResponse` DTO. Constructor injection via Lombok `@RequiredArgsConstructor`. Endpoints that
@@ -77,7 +79,22 @@ handlers yet.
     and `findChatBySenderIdAndRecipientId` matches the pair in either direction, so `createChat` is
     idempotent per pair.
   - Missing users raise `jakarta.persistence.EntityNotFoundException`; there is no
-    `@ControllerAdvice` yet, so it surfaces as a 500.
+    `@ControllerAdvice` yet, so it surfaces as a 500. `MessageService` throws the same for a missing
+    chat.
+  - `message/` follows the same shape: `MessageController` (`/api/v1/messages`) → `MessageService` →
+    `MessageMapper` → `MessageResponse`. Endpoints: `POST` (save, takes a `MessageRequest` body),
+    `POST /upload-media` (`multipart/form-data`, `chatId` + `file` params), `PATCH` (mark a chat's
+    messages `SEEN` via `chatId` param), `GET /chat/{chatId}` (list messages).
+  - Note the asymmetry in how the sender is resolved: `saveMessage` trusts the `senderId`/
+    `recipientId` in the request body, while `uploadMessageMedia` and `setMessagesToSeen` derive them
+    from the `Chat` plus `authentication.getName()` (private `getSenderId`/`getRecipientId` helpers
+    that pick whichever side of the chat matches the caller). The body-supplied ids are unvalidated.
+  - `setMessagesToSeen` is `@Transactional` because the underlying named query is a bulk
+    `@Modifying` update; it currently marks *all* messages in the chat as seen, not just those
+    addressed to the caller (the `recipientId` filter is commented out pending notifications).
+  - `uploadMessageMedia` hardcodes `MessageType.IMAGE` regardless of the uploaded file's type, and
+    `FileService.saveFile` is a stub returning `null`, so `mediaFilePath` is always null for now.
+    `MessageMapper` likewise has a `//todo` where it should populate `MessageResponse.media`.
 - **User synchronization** — `UserSynchronizerFilter` (`OncePerRequestFilter`) runs on every
   authenticated request and upserts the `User` via `UserSynchronizer`. The JWT `sub` claim is the
   user id (not email — see comments in `UserSynchronizer`). `UserMapper` maps
@@ -94,6 +111,7 @@ startup. If migrations are introduced later, switch `ddl-auto` to `validate` and
 - **Lombok** is used for boilerplate; it is configured as an annotation processor in `pom.xml` and
   excluded from the packaged jar.
 - File uploads are capped at 50MB and written to `./upload` (`application.file.uploads.media-output-path`).
+  `file/FileService.saveFile` is the single seam for this and is still an unimplemented stub.
 
 ## Project notes
 

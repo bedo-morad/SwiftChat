@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User,String> {
 
-    @Query(UserConstants.FIND_USER_BY_EMAIL)
+    @Query(name = UserConstants.FIND_USER_BY_EMAIL)
     Optional<User> findUserByEmail(@Param("email") String userEmail);
 
     @Query(name = UserConstants.FIND_USER_BY_PUBLIC_ID)

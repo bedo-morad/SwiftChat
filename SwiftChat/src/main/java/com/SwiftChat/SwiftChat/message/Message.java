@@ -15,7 +15,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "messages")
 @NamedQuery(
-        name = MessageConstants.FIND_MESSAGE_BY_CHAT_ID,
+        name = MessageConstants.FIND_MESSAGES_BY_CHAT_ID,
         query = "SELECT m FROM Message m WHERE m.chat.id = :chatId ORDER BY m.createdDate"
 )
 @NamedQuery(
@@ -39,6 +39,7 @@ public class Message extends BaseAuditingEntity {
     private Chat chat;
     @Column(name = "sender_id",nullable = false)
     private String senderId;
-    @Column(name = "receiver_id",nullable = false)
-    private String receiverId;
+    @Column(name = "recipient_id",nullable = false)
+    private String recipientId;
+    private String mediaFilePath;
 }
