@@ -39,8 +39,9 @@ consumes this API.
 
 ## Architecture
 
-Spring Boot 4.1.0 backend (Java 17) for a chat application. The security layer and the core JPA
-domain model are implemented; there are no controllers or WebSocket handlers yet.
+Spring Boot 4.1.0 backend (Java 17) for a chat application. The security layer, the core JPA domain
+model, and the chat REST slice are implemented; there are no message endpoints and no WebSocket
+handlers yet.
 
 - **Authentication** is stateless JWT via Keycloak. `SecurityConfig` disables CSRF, wires the CORS
   filter, and permits Swagger endpoints plus `/ws/**` (WebSocket handshake) while requiring auth on
@@ -63,7 +64,20 @@ domain model are implemented; there are no controllers or WebSocket handlers yet
     Sender/receiver are stored as plain String id columns, not relations.
 - **Named queries** — JPQL `@NamedQuery` annotations live on the entities; their string names are
   held in sibling `*Constants` classes (e.g. `ChatConstants.FIND_CHAT_BY_SENDER_ID`). Reference the
-  constants, not the literals, when using them from repositories.
+  constants, not the literals, when using them from repositories. Because the constants are *names*,
+  repository methods must use `@Query(name = Xxx.CONSTANT)` — plain `@Query(Xxx.CONSTANT)` would be
+  parsed as JPQL (`UserRepository.findUserByEmail` currently has this bug).
+- **REST layer** — one package per slice; `chat/` is the reference shape:
+  `ChatController` (`/api/v1/chats`) → `ChatService` → `ChatMapper` (a `@Service`, not MapStruct) →
+  `ChatResponse` DTO. Constructor injection via Lombok `@RequiredArgsConstructor`. Endpoints that
+  return a bare string wrap it in `common/StringResponse`.
+  - The current user comes from the injected `Authentication` — `currentUser.getName()` is the JWT
+    `sub`, i.e. the `User` id. Only `createChat` takes ids as request params.
+  - Despite their names, `findChatsBySenderId` matches chats where the user is sender *or* recipient,
+    and `findChatBySenderIdAndRecipientId` matches the pair in either direction, so `createChat` is
+    idempotent per pair.
+  - Missing users raise `jakarta.persistence.EntityNotFoundException`; there is no
+    `@ControllerAdvice` yet, so it surfaces as a 500.
 - **User synchronization** — `UserSynchronizerFilter` (`OncePerRequestFilter`) runs on every
   authenticated request and upserts the `User` via `UserSynchronizer`. The JWT `sub` claim is the
   user id (not email — see comments in `UserSynchronizer`). `UserMapper` maps
