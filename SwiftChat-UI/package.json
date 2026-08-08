@@ -17,7 +17,15 @@
     "@angular/forms": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
+    "@fortawesome/fontawesome-free": "^7.3.1",
+    "bootstrap": "^5.3.8",
+    "keycloak-js": "^26.2.4",
+    "ng-openapi-gen": "^1.0.5",
+    "ngx-quill": "^31.0.1",
+    "quill": "^2.0.3",
     "rxjs": "~7.8.0",
+    "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
