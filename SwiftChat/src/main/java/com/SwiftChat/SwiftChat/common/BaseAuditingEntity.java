@@ -27,6 +27,6 @@ public class BaseAuditingEntity {
     @Column(name = "created_date",nullable = false, updatable = false)
     private LocalDateTime createdDate;
     @LastModifiedDate
-    @Column(name = "last_modified_date",insertable = false,nullable = false)
+    @Column(name = "last_modified_date",insertable = false)
     private LocalDateTime lastModifiedDate;
 }
