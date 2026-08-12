@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, signal} from '@angular/core';
+import {AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, signal, ViewChild} from '@angular/core';
 import {ChatList} from '../chat-list/chat-list';
 import {ChatResponse} from '../../services/models/chat-response';
 import {ChatService} from '../../services/services/chat.service';
@@ -25,7 +25,7 @@ import {Notification} from './notification';
   templateUrl: './main.html',
   styleUrl: './main.scss',
 })
-export class Main implements OnInit, OnDestroy {
+export class Main implements OnInit, OnDestroy, AfterViewChecked {
 
   chats = signal<Array<ChatResponse>>([]);
   selectedChat = signal<ChatResponse>({});
@@ -33,6 +33,7 @@ export class Main implements OnInit, OnDestroy {
   showEmojis = signal(false);
   messageContent = ''
   socketClient: any = null;
+  @ViewChild('scrollableDiv') scrollableDiv!: ElementRef<HTMLDivElement>;
   private notificationSubscription: any;
 
   constructor(
@@ -40,6 +41,10 @@ export class Main implements OnInit, OnDestroy {
     private keycloakService: KeycloakService,
     private messageService: MessageService
   ) {
+  }
+
+  ngAfterViewChecked(): void {
+    this.scrollBottom();
   }
 
   ngOnDestroy(): void {
@@ -291,5 +296,12 @@ export class Main implements OnInit, OnDestroy {
       return null;
     }
     return htmlInputTarget.files[0];
+  }
+
+  private scrollBottom() {
+    if (this.scrollableDiv){
+      const div = this.scrollableDiv.nativeElement;
+      div.scrollTop = div.scrollHeight;
+    }
   }
 }
