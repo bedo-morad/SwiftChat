@@ -129,9 +129,7 @@ FORM: Night Signal with Encrypted Relay geometry; desktop-first three-zone opera
   min-height: 0;
   overflow-y: auto;
   padding: clamp(18px, 3vw, 38px);
-  background-color: #0a0d0b;
-  background-image: radial-gradient(circle, rgba(82, 242, 164, 0.035) 1px, transparent 1px);
-  background-size: 22px 22px;
+  background: #0a0a0a;
   scrollbar-color: var(--swift-border-strong) transparent;
 }
 
@@ -223,8 +221,8 @@ FORM: Night Signal with Encrypted Relay geometry; desktop-first three-zone opera
 }
 
 .send-button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border: 0;
@@ -311,15 +309,12 @@ FORM: Night Signal with Encrypted Relay geometry; desktop-first three-zone opera
 
 @media (max-width: 620px) {
   .workspace {
-    grid-template-columns: 48px minmax(180px, 42vw) minmax(280px, 1fr);
-    overflow-x: auto;
+    grid-template-columns: 60px minmax(120px, 38vw) minmax(0, 1fr);
   }
 
-  .chat-header,
-  .composer {
-    position: sticky;
-    right: 0;
-  }
+  .utility-rail { padding-inline: 8px; }
 
   .message-stream { padding: 16px 12px; }
+  .composer { gap: 4px; padding-inline: 8px; }
+  .message-bubble { max-width: 94%; }
 }

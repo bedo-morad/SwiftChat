@@ -15,7 +15,8 @@
     </nav>
 
     <aside class="list-panel">
-      <app-chat-list [chats]="chats()" (chatSelected)="chatSelected($event)"></app-chat-list>
+      <app-chat-list [chats]="chats()" [selectedChatId]="selectedChat().Id"
+                     (chatSelected)="chatSelected($event)"></app-chat-list>
     </aside>
 
     @if (selectedChat().Id) {

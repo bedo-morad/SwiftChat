@@ -1,34 +1,215 @@
-.chat-list {
-  > div {
-    cursor: pointer;
+:host {
+  display: block;
+  min-width: 0;
+  height: 100%;
+}
 
-    &:hover {
-      background-color: #f2f1f1;
-    }
+.conversation-list {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  background: var(--swift-surface);
+}
+
+.list-header {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--swift-border);
+
+  h1 {
+    margin: 3px 0 0;
+    font-size: 1.25rem;
+    font-weight: 600;
   }
 }
 
-.border-bottom-gray {
-  border-bottom: 1px solid #ccc;
+.product-label {
+  color: var(--swift-primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
-.msg-date {
-  font-size: 0.7rem;
-  &.unread {
-    color: #1fa855;
-    font-weight: 500;
+.future-controls {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--swift-border);
+}
+
+.search-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--swift-border);
+  border-radius: var(--swift-radius);
+  background: var(--swift-surface-raised);
+  color: var(--swift-text-muted);
+
+  &:focus-within {
+    border-color: var(--swift-primary);
+    box-shadow: var(--swift-focus-ring);
+  }
+
+  input {
+    min-width: 0;
+    width: 100%;
+    padding: 10px 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--swift-text);
   }
 }
 
-.unread-msg-badge {
-  background: #1fa855;
-  color: #fff;
+.filter-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.filter-chip {
+  padding: 6px 10px;
+  border: 1px solid var(--swift-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--swift-text-muted);
+
+  &.is-active {
+    border-color: rgba(46, 232, 138, 0.45);
+    background: rgba(46, 232, 138, 0.1);
+    color: var(--swift-primary);
+  }
+}
+
+.conversation-rows {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-color: var(--swift-border-strong) transparent;
+}
+
+.conversation-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--swift-border);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: 150ms ease;
+
+  &:hover {
+    background: var(--swift-surface-raised);
+  }
+
+  &.selected {
+    box-shadow: inset 1px 0 var(--swift-primary);
+    background: rgba(46, 232, 138, 0.08);
+  }
+
+  &:focus-visible {
+    position: relative;
+    outline: none;
+    box-shadow: inset 3px 0 var(--swift-primary), var(--swift-focus-ring);
+  }
+}
+
+@media (max-width: 620px) {
+  .list-header { padding-inline: 10px; }
+  .conversation-row { gap: 6px; padding-inline: 6px; }
+  .row-meta { gap: 3px; font-size: 0.6rem; }
+  .unread-count { min-width: 18px; height: 18px; padding-inline: 4px; font-size: 0.62rem; }
+}
+
+.row-copy,
+.row-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row-name {
+  overflow: hidden;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-preview {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--swift-text-muted);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-meta {
+  align-items: flex-end;
+  gap: 6px;
+  color: var(--swift-text-muted);
+  font-size: 0.68rem;
+}
+
+.unread {
+  color: var(--swift-primary);
+}
+
+.unread-count {
   min-width: 20px;
   height: 20px;
-  border-radius: 50%;
-  font-size: 0.8rem;
-  font-weight: 400;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--swift-primary);
+  color: #07110b;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.presence-copy {
   display: flex;
-  justify-content: center;
   align-items: center;
+  gap: 5px;
+}
+
+.presence-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+
+  &.online {
+    background: var(--swift-primary);
+    box-shadow: 0 0 8px rgba(46, 232, 138, 0.42);
+  }
+}
+
+.list-empty {
+  min-height: 220px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--swift-text-muted);
+  text-align: center;
+
+  i {
+    color: var(--swift-primary);
+    font-size: 1.35rem;
+  }
+
+  strong {
+    color: var(--swift-text);
+  }
 }

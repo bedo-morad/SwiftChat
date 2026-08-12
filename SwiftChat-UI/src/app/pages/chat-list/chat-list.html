@@ -1,79 +1,82 @@
-<div class="sticky-top bg-white">
-  <div class="d-flex justify-content-between align-items-center gap-2 p-2">
-    <h4>Chat</h4>
+<section class="conversation-list" aria-label="Conversations">
+  <header class="list-header">
+    <div>
+      <span class="product-label">SwiftChat</span>
+      <h1>{{ searchNewContact() ? 'New conversation' : 'Messages' }}</h1>
+    </div>
     @if (!searchNewContact()) {
-      <i class="fas fa-comment-medical cursor-pointer" (click)="searchContact()"></i>
+      <button class="icon-button new-chat-button" type="button"
+              aria-label="Start a new conversation" title="New conversation"
+              (click)="searchContact()">
+        <i class="fas fa-comment-medical" aria-hidden="true"></i>
+      </button>
     } @else {
-      <i class="fas fa-times-circle cursor-pointer" (click)="searchNewContact.set(false)"></i>
+      <button class="icon-button" type="button" aria-label="Close contact list"
+              title="Close" (click)="searchNewContact.set(false)">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
     }
-  </div>
-  <div class="d-flex flex-column gap-2 p-2">
-    <div class="input-group">
-      <span class="input-group-text">
-        <i class="fas fa-search"></i>
-      </span>
-      <input type="text" class="form-control-sm" placeholder="Search in the chat" aria-label="Search">
+  </header>
+
+  <div class="future-controls" hidden>
+    <label class="search-control">
+      <i class="fas fa-search" aria-hidden="true"></i>
+      <input type="search" placeholder="Search conversations" aria-label="Search conversations">
+    </label>
+    <div class="filter-row" aria-label="Conversation filters">
+      <button class="filter-chip is-active" type="button">All</button>
+      <button class="filter-chip" type="button">Unread</button>
+      <button class="filter-chip" type="button">Favorites</button>
     </div>
-    <div class="d-flex gap-2">
-      <span class="badge rounded-pill text-bg-light cursor-pointer">All</span>
-      <span class="badge rounded-pill text-bg-light cursor-pointer">Unread</span>
-      <span class="badge rounded-pill text-bg-light cursor-pointer">Favorites</span>
-    </div>
   </div>
-</div>
-<div class="chat-list mt-3">
-  @if (chats().length && !searchNewContact()) {
-    @for (chat of chats(); track chat) {
-      <div class="d-flex align-items-center justify-content-between border-bottom-gray p-2"
-           (click)="chatClicked(chat)"
-      >
-        <div class="d-flex gap-2">
-          <div class="user-img">
-            <img src="user.png" alt="">
-          </div>
-          <div class="d-flex flex-column">
-            <span>{{ chat.name }}</span>
-            <small class="text-secondary">
+
+  <div class="conversation-rows">
+    @if (chats().length && !searchNewContact()) {
+      @for (chat of chats(); track chat.Id) {
+        <button class="conversation-row" type="button" [class.selected]="chat.Id === selectedChatId()"
+                [attr.aria-current]="chat.Id === selectedChatId() ? 'true' : null" (click)="chatClicked(chat)">
+          <span class="avatar"><img src="user.png" alt=""></span>
+          <span class="row-copy">
+            <span class="row-name">{{ chat.name }}</span>
+            <span class="row-preview">
               @if (chat.lastMessage === 'Attachment') {
-                <i class="fas fa-image"></i>
+                <i class="fas fa-image" aria-hidden="true"></i>
               }
               {{ wrapMessage(chat.lastMessage) }}
-            </small>
-          </div>
-        </div>
-        <div class="d-flex flex-column align-items-end">
-          <span class="msg-date"
-                [class.unread]="chat.unreadCount && chat.unreadCount > 0"
-          >
-            {{ chat.lastMessageTime  | date: 'HH:mm' }}
+            </span>
           </span>
-          @if (chat.unreadCount && chat.unreadCount > 0) {
-            <small class="unread-msg-badge">{{chat.unreadCount}}</small>
-          }
-        </div>
-      </div>
-    }
-  } @else if (searchNewContact()) {
-    @for (contact of contacts(); track contact) {
-      <div class="d-flex align-items-center justify-content-between border-bottom-gray p-2"
-           (click)="selectContact(contact)"
-      >
-        <div class="d-flex gap-2">
-          <div class="user-img">
-            <img src="user.png" alt="">
-          </div>
-          <div class="d-flex flex-column">
-            <span>{{ contact.firstName + ' ' + contact.lastName }}</span>
-            @if (contact.online) {
-              <small class="text-secondary">Online</small>
-            } @else {
-              <small class="text-secondary">last seen &nbsp;{{ contact.lastSeen | date: 'HH:mm' }}</small>
+          <span class="row-meta">
+            <time [class.unread]="chat.unreadCount && chat.unreadCount > 0">
+              {{ chat.lastMessageTime | date: 'HH:mm' }}
+            </time>
+            @if (chat.unreadCount && chat.unreadCount > 0) {
+              <span class="unread-count" [attr.aria-label]="chat.unreadCount + ' unread messages'">
+                {{ chat.unreadCount }}
+              </span>
             }
-          </div>
-        </div>
+          </span>
+        </button>
+      }
+    } @else if (searchNewContact()) {
+      @for (contact of contacts(); track contact.id) {
+        <button class="conversation-row" type="button" (click)="selectContact(contact)">
+          <span class="avatar"><img src="user.png" alt=""></span>
+          <span class="row-copy">
+            <span class="row-name">{{ contact.firstName + ' ' + contact.lastName }}</span>
+            @if (contact.online) {
+              <span class="row-preview presence-copy"><span class="presence-dot online"></span>Online</span>
+            } @else {
+              <span class="row-preview">Last seen {{ contact.lastSeen | date: 'HH:mm' }}</span>
+            }
+          </span>
+        </button>
+      }
+    } @else {
+      <div class="list-empty">
+        <i class="far fa-comments" aria-hidden="true"></i>
+        <strong>No conversations yet</strong>
+        <span>Start one with the button above.</span>
       </div>
     }
-  } @else {
-    <small class="text-muted p-2">No chats yet..</small>
-  }
-</div>
+  </div>
+</section>

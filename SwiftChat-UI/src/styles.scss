@@ -1,30 +1,105 @@
-@import "bootstrap/dist/css/bootstrap.min.css";
 @import "@fortawesome/fontawesome-free/css/all.min.css";
 @import "@ctrl/ngx-emoji-mart/picker";
 
+:root {
+  color-scheme: dark;
+  --swift-bg: #0a0a0a;
+  --swift-surface: #121412;
+  --swift-surface-raised: #181d1a;
+  --swift-border: #242a26;
+  --swift-border-strong: #344039;
+  --swift-primary: #2ee88a;
+  --swift-primary-bright: #52f2a4;
+  --swift-primary-pressed: #1bbe70;
+  --swift-text: #f5f7f6;
+  --swift-text-muted: #a8b0ac;
+  --swift-danger: #ff6b72;
+  --swift-radius: 8px;
+  --swift-focus-ring: 0 0 0 2px rgba(46, 232, 138, 0.42);
+}
+
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
-body{
-  background-color: #ccc;
+html,
+body {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
 }
 
-.gray-bg{
-  background-color: #f0f2f5;
-}
-.cursor-pointer{
-  cursor: pointer;
-}
-
-.user-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+body {
   overflow: hidden;
-  >img{
+  background: var(--swift-bg);
+  color: var(--swift-text);
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.icon-button {
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+  border-radius: var(--swift-radius);
+  background: transparent;
+  color: var(--swift-text-muted);
+  cursor: pointer;
+  transition: 150ms ease;
+
+  &:hover {
+    border-color: var(--swift-border);
+    background: var(--swift-surface-raised);
+    color: var(--swift-text);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--swift-primary);
+    box-shadow: var(--swift-focus-ring);
+  }
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--swift-border-strong);
+  border-radius: 50%;
+  background: var(--swift-surface-raised);
+
+  img {
     width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

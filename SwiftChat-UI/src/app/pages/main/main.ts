@@ -11,7 +11,7 @@ import {FormsModule} from '@angular/forms';
 import {EmojiData} from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import {MessageRequest} from '../../services/models/message-request';
 import SockJS from 'sockjs-client';
-import * as Stomp from 'stompjs';
+import {Stomp} from 'stompjs/lib/stomp.js';
 import {Notification} from './notification';
 
 @Component({

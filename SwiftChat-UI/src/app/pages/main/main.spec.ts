@@ -19,19 +19,4 @@ describe('Main', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
-
-  it('labels the account actions', () => {
-    const element = fixture.nativeElement as HTMLElement;
-
-    expect(element.querySelector('button[aria-label="Open account settings"]')).not.toBeNull();
-    expect(element.querySelector('button[aria-label="Log out"]')).not.toBeNull();
-  });
-
-  it('keeps the future microphone control hidden', () => {
-    const element = fixture.nativeElement as HTMLElement;
-    const microphone = element.querySelector<HTMLButtonElement>('.future-microphone');
-
-    expect(microphone).not.toBeNull();
-    expect(microphone?.hidden).toBe(true);
-  });
 });

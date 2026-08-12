@@ -16,6 +16,7 @@ import {KeycloakService} from '../../utils/keycloak/keycloak-service';
 })
 export class ChatList {
   chats: InputSignal<ChatResponse[]> = input<ChatResponse[]>([]);
+  selectedChatId = input<string>();
   searchNewContact = signal(false);
   contacts = signal<Array<UserResponse>>([]);
   chatSelected = output<ChatResponse>();
