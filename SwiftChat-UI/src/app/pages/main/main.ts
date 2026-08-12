@@ -1,4 +1,4 @@
-import {Component, OnInit, signal} from '@angular/core';
+import {Component, OnDestroy, OnInit, signal} from '@angular/core';
 import {ChatList} from '../chat-list/chat-list';
 import {ChatResponse} from '../../services/models/chat-response';
 import {ChatService} from '../../services/services/chat.service';
@@ -10,6 +10,9 @@ import {PickerComponent} from '@ctrl/ngx-emoji-mart';
 import {FormsModule} from '@angular/forms';
 import {EmojiData} from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import {MessageRequest} from '../../services/models/message-request';
+import SockJS from 'sockjs-client';
+import * as Stomp from 'stompjs';
+import {Notification} from './notification';
 
 @Component({
   selector: 'app-main',
@@ -22,13 +25,15 @@ import {MessageRequest} from '../../services/models/message-request';
   templateUrl: './main.html',
   styleUrl: './main.scss',
 })
-export class Main implements OnInit {
+export class Main implements OnInit, OnDestroy {
 
   chats = signal<Array<ChatResponse>>([]);
   selectedChat = signal<ChatResponse>({});
   chatMessages = signal<MessageResponse[]>([]);
   showEmojis = signal(false);
   messageContent = ''
+  socketClient: any = null;
+  private notificationSubscription: any;
 
   constructor(
     private chatService: ChatService,
@@ -37,7 +42,16 @@ export class Main implements OnInit {
   ) {
   }
 
+  ngOnDestroy(): void {
+    if (this.socketClient !== null) {
+      this.socketClient.disconnect();
+      this.notificationSubscription.unsubscribe();
+      this.socketClient = null;
+    }
+  }
+
   ngOnInit(): void {
+    this.initWebSocket();
     this.getAllChats();
   }
 
@@ -60,12 +74,13 @@ export class Main implements OnInit {
 
   protected chatSelected(chatResponse: ChatResponse) {
     this.selectedChat.set(chatResponse);
+    this.chats.update(chats => chats.some(chat => chat.Id === chatResponse.Id)
+      ? chats.map(chat => chat.Id === chatResponse.Id ? {...chat, unreadCount: 0} : chat)
+      : [{...chatResponse, unreadCount: 0}, ...chats]
+    );
     this.getAllChatMessages(chatResponse.Id as string);
     this.setMessagesToSeen()
-    this.selectedChat.update(value => {
-      value.unreadCount = 0;
-      return value;
-    })
+    this.selectedChat.update(chat => ({...chat, unreadCount: 0}));
   }
 
   private getAllChatMessages(chatId: string) {
@@ -132,9 +147,9 @@ export class Main implements OnInit {
             createdAt: new Date().toString()
           }
           this.selectedChat.update((chat) => {
-            chat.lastMessage = this.messageContent;
-            return chat;
+            return {...chat, lastMessage: this.messageContent, lastMessageTime: new Date().toString()};
           });
+          this.updateChatPreview(this.selectedChat().Id as string, this.messageContent, false);
           this.chatMessages.update((messages) => [...messages, message]);
           this.messageContent = '';
           this.showEmojis.set(false);
@@ -155,5 +170,90 @@ export class Main implements OnInit {
       return this.selectedChat().recipientId as string;
     }
     return this.selectedChat().senderId as string;
+  }
+
+  private initWebSocket() {
+    if (this.keycloakService.keycloak.tokenParsed?.sub) {
+      let ws = new SockJS('http://localhost:8080/ws');
+      this.socketClient = Stomp.over(ws)
+      const subUrl = `/user/${this.keycloakService.keycloak.tokenParsed?.sub}/chat`
+      this.socketClient.connect(
+        {'Authorization': `Bearer ${this.keycloakService.keycloak.token}`},
+        () => {
+          this.notificationSubscription = this.socketClient.subscribe(
+            subUrl,
+            (message: any) => {
+              console.log(message);
+              const notification: Notification = JSON.parse(message.body);
+              this.handleNotification(notification);
+            },
+            () => {
+              console.log('Subscription failed');
+            }
+          );
+        }
+      )
+    }
+  }
+
+  private handleNotification(notification: Notification) {
+    if (!notification) return;
+    if (this.selectedChat() && this.selectedChat().Id === notification.chatId) {
+      switch (notification.type) {
+        case 'MESSAGE':
+        case 'IMAGE':
+          const message: MessageResponse = {
+            senderId: notification.senderId,
+            recipientId: notification.recipientId,
+            content: notification.content,
+            type: notification.messageType,
+            media: notification.media,
+            createdAt: new Date().toString()
+          };
+          const lastMessage = notification.type === 'IMAGE' ? 'Attachment' : notification.content;
+          this.selectedChat.update(chat => ({...chat, lastMessage, lastMessageTime: new Date().toString()}));
+          this.updateChatPreview(notification.chatId as string, lastMessage, false);
+          this.chatMessages.update((messages) => [...messages, message]);
+          break;
+        case 'SEEN':
+          this.chatMessages.update(messages =>
+            messages.map(message => ({...message, state: 'SEEN'}))
+          );
+          break;
+
+      }
+    } else {
+      if (notification.type !== 'SEEN') {
+        const lastMessage = notification.type === 'IMAGE' ? 'Attachment' : notification.content;
+        const exists = this.chats().some(chat => chat.Id === notification.chatId);
+        if (exists) {
+          this.updateChatPreview(notification.chatId as string, lastMessage, true);
+        } else if (notification.type === 'MESSAGE') {
+          const newChat: ChatResponse = {
+            Id: notification.chatId,
+            senderId: notification.senderId,
+            recipientId: notification.recipientId,
+            lastMessage: notification.content,
+            name: notification.chatName,
+            unreadCount: 1,
+            lastMessageTime: new Date().toString()
+          };
+          this.chats.update((chats) => [newChat, ...chats]);
+        }
+      }
+    }
+  }
+
+  private updateChatPreview(chatId: string, lastMessage: string | undefined, incrementUnread: boolean): void {
+    this.chats.update(chats => chats.map(chat =>
+      chat.Id === chatId
+        ? {
+          ...chat,
+          lastMessage,
+          lastMessageTime: new Date().toString(),
+          unreadCount: incrementUnread ? (chat.unreadCount ?? 0) + 1 : chat.unreadCount
+        }
+        : chat
+    ));
   }
 }

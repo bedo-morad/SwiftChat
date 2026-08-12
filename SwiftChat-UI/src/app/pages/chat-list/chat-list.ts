@@ -62,7 +62,6 @@ export class ChatList {
           senderId: this.keycloakService.userId,
           recipientId: contact.id
         }
-        this.chats().unshift(chat);
         this.searchNewContact.set(false);
         this.chatSelected.emit(chat);
       }
