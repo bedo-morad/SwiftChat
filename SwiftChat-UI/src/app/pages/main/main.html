@@ -1,125 +1,102 @@
-<div class="main">
-  <div class="background-green"></div>
-  <div class="main-container d-flex">
-    <div class="d-flex flex-column justify-content-between align-items-center p-3 gray-bg">
-      <div>
-        <i class="fa-solid fa-message cursor-pointer"></i>
+<main class="app-shell">
+  <section class="workspace" aria-label="SwiftChat messaging workspace">
+    <nav class="utility-rail" aria-label="Account navigation">
+      <div class="brand-mark" title="SwiftChat" aria-label="SwiftChat">S</div>
+      <div class="rail-actions">
+        <button class="icon-button" type="button" aria-label="Open account settings"
+                title="Account settings" (click)="userProfile()">
+          <i class="fa-solid fa-user" aria-hidden="true"></i>
+        </button>
+        <button class="icon-button logout-button" type="button" aria-label="Log out"
+                title="Log out" (click)="logout()">
+          <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+        </button>
       </div>
-      <div class="d-flex flex-column align-items-center gap-2">
-        <i class="fa-solid fa-user cursor-pointer" (click)="userProfile()"></i>
-        <i class="fa-solid fa-door-open cursor-pointer" (click)="logout()"></i>
-      </div>
-    </div>
-    <div class="d-flex w-100">
-      <div class="col-3 overflow-x-scroll">
-        <app-chat-list
-          [chats]="chats()"
-          (chatSelected)="chatSelected($event)"
-        ></app-chat-list>
-      </div>
-      @if (selectedChat().Id) {
-        <div class="col-9">
-          <div class="d-flex flex-column justify-content-between h-100">
-            <div class="gray-bg p-2">
-              <div class="d-flex gap-2 align-items-center">
-                <div class="user-img">
-                  <img src="user.png" alt="">
-                </div>
-                @if (selectedChat()) {
-                  <div class="d-flex flex-column">
-                    <span>{{ selectedChat().name }}</span>
-                    <div class="d-flex gap-1 align-items-center">
-                      @if (selectedChat().recipientOnline) {
-                        <small class="online-status"></small>
-                        <small>Online</small>
-                      } @else {
-                        <small class="offline-status"></small>
-                        <small>Offline</small>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-            <div #scrollableDiv class="h-100 bg-chat p-3 overflow-x-scroll">
-              @for (message of chatMessages(); track message) {
-                <div
-                  class="message-box"
-                  [class.self-message]="isSelfMessage(message)"
-                  [class.friend]="!isSelfMessage(message)"
-                >
-                  <div
-                    class="d-flex flex-column"
-                    [class.align-items-end]="!isSelfMessage(message)"
-                  >
-                    @if (message.type === 'TEXT') {
-                      <span>{{ message.content }}</span>
-                    } @else if (message.media) {
-                      <img width="200" class="cursor-pointer" [src]="'data:image/jpg;base64,' + message.media" alt="">
-                    }
-                    <small class="text-black-50">
-                      {{ message.createdAt | date:'HH:mm' }}
-                      @if (message.state === 'SENT') {
-                        <span>
-                          <i class="fas fa-check"></i>
-                        </span>
-                      } @else if (message.state === 'SEEN') {
-                        <span>
-                          <i class="fas fa-check seen"></i>
-                          <i class="fas fa-check seen ml-neg"></i>
-                        </span>
-                      }
-                    </small>
-                  </div>
-                </div>
-              }
-            </div>
-            <div class="gray-bg p-2">
-              <div class="d-flex align-items-center gap-2">
-                <i
-                  class="fas fa-paperclip cursor-pointer"
-                  (click)="inputFile.click()"
-                ></i>
-                <input
-                  #inputFile
-                  type="file"
-                  [hidden]="true"
-                  accept=".jpg, .jpeg, .png, .svg, .mp4, .mov, .mp3"
-                  (change)="uploadMedia($event.target)"
-                >
-                <i class="fa-regular fa-face-smile cursor-pointer" (click)="showEmojis.set(!showEmojis())"></i>
-                @if (showEmojis()) {
-                  <emoji-mart
-                    [set]="'apple'"
-                    title="Pick your emoji..."
-                    emoji="smile"
-                    class="emojis-panel"
-                    (emojiClick)="onSelectEmoji($event)"
-                  >
-                  </emoji-mart>
-                }
-                <input
-                  type="text"
-                  class="form-control-sm w-100"
-                  placeholder="Message"
-                  [(ngModel)]="messageContent"
-                  (keydown)="keyDown($event)"
-                  (click)="onClick()"
-                >
-                @if (messageContent) {
-                  <i class="fas fa-paper-plane cursor-pointer" (click)="sendMessage()"></i>
-                } @else {
-                  <i class="fas fa-microphone cursor-pointer"></i>
-                }
-              </div>
-            </div>
+    </nav>
+
+    <aside class="list-panel">
+      <app-chat-list [chats]="chats()" (chatSelected)="chatSelected($event)"></app-chat-list>
+    </aside>
+
+    @if (selectedChat().Id) {
+      <section class="chat-panel" aria-label="Active conversation">
+        <header class="chat-header">
+          <span class="avatar"><img src="user.png" alt=""></span>
+          <div class="participant-copy">
+            <h2>{{ selectedChat().name }}</h2>
+            @if (selectedChat().recipientOnline) {
+              <span class="participant-status"><span class="presence-dot online"></span>Online</span>
+            } @else {
+              <span class="participant-status"><span class="presence-dot offline"></span>Offline</span>
+            }
           </div>
+        </header>
+
+        <div #scrollableDiv class="message-stream" aria-live="polite">
+          @for (message of chatMessages(); track $index) {
+            <article class="message-row" [class.self-message]="isSelfMessage(message)">
+              <div class="message-bubble">
+                @if (message.type === 'TEXT') {
+                  <span class="message-content">{{ message.content }}</span>
+                } @else if (message.media) {
+                  <img class="message-media" [src]="'data:image/jpg;base64,' + message.media"
+                       alt="Shared attachment">
+                }
+                <footer class="message-meta">
+                  <time>{{ message.createdAt | date:'HH:mm' }}</time>
+                  @if (message.state === 'SENT') {
+                    <span aria-label="Sent"><i class="fas fa-check" aria-hidden="true"></i></span>
+                  } @else if (message.state === 'SEEN') {
+                    <span class="seen-state" aria-label="Seen">
+                      <i class="fas fa-check" aria-hidden="true"></i>
+                      <i class="fas fa-check second-check" aria-hidden="true"></i>
+                    </span>
+                  }
+                </footer>
+              </div>
+            </article>
+          }
         </div>
-      } @else {
-        <div class="bg-chat d-flex flex-column justify-content-center align-items-center h-100 w-100">
-          <img width="300" src="banner-no-background.png" alt="">
-        </div>
-      }
-    </div>
-  </div>
-</div>
+
+        <footer class="composer">
+          <button class="icon-button" type="button" aria-label="Attach a file" title="Attach file"
+                  (click)="inputFile.click()">
+            <i class="fas fa-paperclip" aria-hidden="true"></i>
+          </button>
+          <input #inputFile type="file" hidden
+                 accept=".jpg, .jpeg, .png, .svg, .mp4, .mov, .mp3"
+                 (change)="uploadMedia($event.target)">
+          <button class="icon-button" type="button" aria-label="Choose an emoji" title="Emoji"
+                  [attr.aria-expanded]="showEmojis()" (click)="showEmojis.set(!showEmojis())">
+            <i class="fa-regular fa-face-smile" aria-hidden="true"></i>
+          </button>
+          @if (showEmojis()) {
+            <emoji-mart class="emojis-panel" [set]="'apple'" title="Pick an emoji"
+                        emoji="smile" (emojiClick)="onSelectEmoji($event)"></emoji-mart>
+          }
+          <input class="message-input" type="text" aria-label="Message"
+                 placeholder="Write a message" [(ngModel)]="messageContent"
+                 (keydown)="keyDown($event)" (click)="onClick()">
+          @if (messageContent) {
+            <button class="send-button" type="button" aria-label="Send message" title="Send"
+                    (click)="sendMessage()">
+              <i class="fas fa-paper-plane" aria-hidden="true"></i>
+            </button>
+          } @else {
+            <button class="icon-button future-microphone" type="button" hidden
+                    aria-label="Record a voice message" title="Voice message">
+              <i class="fas fa-microphone" aria-hidden="true"></i>
+            </button>
+          }
+        </footer>
+      </section>
+    } @else {
+      <section class="empty-conversation" aria-label="No conversation selected">
+        <div class="empty-signal" aria-hidden="true"><span></span><span></span><span></span></div>
+        <img src="banner-no-background.png" alt="SwiftChat">
+        <h2>Your messages, in one signal.</h2>
+        <p>Select a conversation or start a new one.</p>
+      </section>
+    }
+  </section>
+</main>

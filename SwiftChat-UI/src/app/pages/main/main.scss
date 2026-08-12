@@ -1,124 +1,325 @@
-.main {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: #ccc;
+/*
+THESIS: SwiftChat is a calm live signal workspace, not a floating WhatsApp clone.
+OWN-WORLD: Near-black canvas, graphite planes, soft 8px controls, and scarce neon-green state.
+STORY: Choose a person, read the thread, and send a message without decorative interference.
+FIRST VIEWPORT: Utility rail, compact conversation list, and active thread fill the viewport side by side.
+FORM: Night Signal with Encrypted Relay geometry; desktop-first three-zone operational workspace.
+*/
+
+:host {
+  display: block;
+  height: 100dvh;
 }
 
-.background-green {
-  position: absolute;
-  top: 0;
+.app-shell {
+  min-width: 320px;
+  height: 100%;
+  padding: clamp(10px, 1.5vw, 22px);
+  background: var(--swift-bg);
+}
+
+.workspace {
   width: 100%;
-  height: 20%;
-  background-color: #1ea885;
+  max-width: 1680px;
+  height: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 64px minmax(280px, 360px) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--swift-border);
+  border-radius: 10px;
+  background: var(--swift-surface);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
 }
 
-.main-container {
-  position: relative;
-  width: 80%;
-  max-width: 100%;
-  height: calc(100vh - 40px);
-  background: #fff;
-  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.5), 0 2px 5px 0 rgba(0, 0, 0, 0.6);
-}
-
-.online-status {
-  background: #1ea885;
-  min-width: 10px;
-  min-height: 10px;
-  height: 10px;
-  border-radius: 50%;
-  font-size: 0.8rem;
-  font-weight: 400;
+.utility-rail {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: space-between;
+  padding: 14px 12px;
+  border-right: 1px solid var(--swift-border);
+  background: #0e100f;
 }
 
-.offline-status {
-  background: #cacaca;
-  min-width: 10px;
-  min-height: 10px;
-  height: 10px;
-  border-radius: 50%;
-  font-size: 0.8rem;
-  font-weight: 400;
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--swift-radius);
+  background: var(--swift-primary);
+  color: #07110b;
+  font-size: 1.05rem;
+  font-weight: 900;
+  box-shadow: 0 0 18px rgba(46, 232, 138, 0.22);
+}
+
+.rail-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.logout-button:hover {
+  border-color: rgba(255, 107, 114, 0.35);
+  color: var(--swift-danger);
+}
+
+.list-panel {
+  min-width: 0;
+  border-right: 1px solid var(--swift-border);
+}
+
+.chat-panel {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: #0c0f0d;
+}
+
+.chat-header {
+  min-height: 72px;
   display: flex;
-  justify-content: center;
   align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--swift-border);
+  background: var(--swift-surface);
 }
 
-.bg-chat {
-  background: #efeae2;
-  background-image: url("/background.png");
-  background-size: contain;
+.participant-copy {
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    overflow: hidden;
+    font-size: 0.98rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
-.message-box {
-  position: relative;
+.participant-status {
   display: flex;
-  width: 100%;
-  margin: 5px 0;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  color: var(--swift-text-muted);
+  font-size: 0.72rem;
+}
+
+.presence-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+
+  &.online {
+    background: var(--swift-primary);
+    box-shadow: 0 0 8px rgba(46, 232, 138, 0.4);
+  }
+
+  &.offline {
+    border: 1px solid var(--swift-text-muted);
+  }
+}
+
+.message-stream {
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(18px, 3vw, 38px);
+  background-color: #0a0d0b;
+  background-image: radial-gradient(circle, rgba(82, 242, 164, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+  scrollbar-color: var(--swift-border-strong) transparent;
+}
+
+.message-row {
+  display: flex;
+  margin: 7px 0;
+  justify-content: flex-start;
 
   &.self-message {
-    > div {
-      position: relative;
-      right: 0;
-      text-align: right;
-      background: #d9fdd3;
-      max-width: 65%;
-      padding: 10px 10px 0 10px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-    }
-
     justify-content: flex-end;
-    &::before{
-      content: '';
-      position: absolute;
-      top: 0;
-      right: -10px;
-      width: 20px;
-      height: 20px;
-      background: linear-gradient(135deg, #d9fdd3 0%, #d9fdd3 50%,transparent 50%,transparent);
-    }
-  }
-  &.friend{
-    justify-content: flex-start;
-    >div{
-      position: relative;
-      right: 0;
-      text-align: left;
-      background: #fff;
-      max-width: 65%;
-      padding: 10px 10px 0 10px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-    }
-    &::before{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -10px;
-      width: 20px;
-      height: 20px;
-      background: linear-gradient(225deg, #fff 0%, #fff 50%,transparent 50%,transparent);
+
+    .message-bubble {
+      border-color: rgba(46, 232, 138, 0.24);
+      background: #123322;
     }
   }
 }
 
-i {
-  &.seen {
-    color: #53bded;
+.message-bubble {
+  max-width: min(68%, 680px);
+  padding: 10px 12px 7px;
+  border: 1px solid var(--swift-border);
+  border-radius: var(--swift-radius);
+  background: var(--swift-surface-raised);
+  color: var(--swift-text);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+}
+
+.message-content {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.message-media {
+  display: block;
+  width: min(320px, 100%);
+  max-height: 380px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--swift-text-muted);
+  font-size: 0.66rem;
+}
+
+.seen-state {
+  color: var(--swift-primary-bright);
+}
+
+.second-check {
+  margin-left: -8px;
+}
+
+.composer {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--swift-border);
+  background: var(--swift-surface);
+}
+
+.message-input {
+  min-width: 0;
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--swift-border);
+  border-radius: var(--swift-radius);
+  outline: none;
+  background: var(--swift-surface-raised);
+  color: var(--swift-text);
+
+  &::placeholder {
+    color: var(--swift-text-muted);
   }
-  &.ml-neg{
-    margin-left: -10px;
+
+  &:focus {
+    border-color: var(--swift-primary);
+    box-shadow: var(--swift-focus-ring);
+  }
+}
+
+.send-button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--swift-radius);
+  background: var(--swift-primary);
+  color: #07110b;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(46, 232, 138, 0.18);
+
+  &:hover { background: var(--swift-primary-bright); }
+  &:active { background: var(--swift-primary-pressed); }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--swift-focus-ring), 0 0 18px rgba(46, 232, 138, 0.2);
   }
 }
 
 .emojis-panel {
   position: absolute;
-  left: 350px;
-  bottom: 50px;
+  z-index: 10;
+  left: 56px;
+  bottom: calc(100% + 8px);
+  max-width: calc(100vw - 120px);
+}
+
+.empty-conversation {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: #0a0d0b;
+  text-align: center;
+
+  img {
+    width: min(280px, 70%);
+    max-height: 160px;
+    object-fit: contain;
+  }
+
+  h2 {
+    margin: 22px 0 6px;
+    font-size: clamp(1.2rem, 2vw, 1.65rem);
+  }
+
+  p {
+    margin: 0;
+    color: var(--swift-text-muted);
+  }
+}
+
+.empty-signal {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  span {
+    width: 4px;
+    border-radius: 4px;
+    background: var(--swift-primary);
+    box-shadow: 0 0 8px rgba(46, 232, 138, 0.35);
+
+    &:nth-child(1) { height: 12px; }
+    &:nth-child(2) { height: 26px; }
+    &:nth-child(3) { height: 18px; }
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell { padding: 0; }
+
+  .workspace {
+    grid-template-columns: 54px minmax(230px, 32vw) minmax(0, 1fr);
+    border: 0;
+    border-radius: 0;
+  }
+
+  .utility-rail { padding-inline: 8px; }
+  .message-bubble { max-width: 82%; }
+}
+
+@media (max-width: 620px) {
+  .workspace {
+    grid-template-columns: 48px minmax(180px, 42vw) minmax(280px, 1fr);
+    overflow-x: auto;
+  }
+
+  .chat-header,
+  .composer {
+    position: sticky;
+    right: 0;
+  }
+
+  .message-stream { padding: 16px 12px; }
 }
