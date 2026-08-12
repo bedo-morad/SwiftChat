@@ -21,7 +21,7 @@ SwiftChat is an authenticated messaging application that pairs an Angular client
 <p align="center">
   <img src="docs/screenshots/workspace.png" alt="SwiftChat Night Signal workspace with conversation list and active chat" width="100%">
 </p>
-<p align="center"><em>Night Signal workspace with conversation previews, unread counts, and an active one-to-one chat.</em></p>
+<p align="center"><em>Workspace with conversation previews.</em></p>
 
 <table>
   <tr>
@@ -29,8 +29,8 @@ SwiftChat is an authenticated messaging application that pairs an Angular client
     <td width="50%"><img src="docs/screenshots/media-and-emoji.png" alt="SwiftChat conversation with an image attachment and emoji picker"></td>
   </tr>
   <tr>
-    <td align="center"><em>Real-time conversation and delivery state.</em></td>
-    <td align="center"><em>Image attachment and emoji interaction.</em></td>
+    <td align="center"><em>Real-time conversation,Image attachment and delivery state.</em></td>
+    <td align="center"><em>Emoji interaction.</em></td>
   </tr>
 </table>
 
@@ -48,6 +48,7 @@ flowchart LR
     Client[ng-openapi-gen Angular services/models]
 
     Browser -->|Authenticate| Keycloak
+    Keycloak -->|User Synchronization| API
     Keycloak -->|JWT| Browser
     Browser -->|Bearer-authenticated REST| API
     Browser <-->|Per-user notifications| WS
@@ -64,7 +65,7 @@ flowchart LR
 - Spring Security validates Keycloak JWTs for stateless API authentication and maps scope plus `resource_access.account.roles` to Spring authorities when that claim is present.
 - A request filter synchronizes authenticated user profiles from JWT claims into PostgreSQL.
 - One-to-one chat creation reuses an existing conversation for either ordering of the same participant pair.
-- Manually tested real-time messaging uses the Angular SockJS/STOMP client subscription and Spring user-destination notifications for messages, images, and seen-state updates.
+- Real-time messaging uses the Angular SockJS/STOMP client subscription and Spring user-destination notifications for real time updates.
 - Chat responses derive unread counts from messages addressed to the current user with `SENT` state; messages transition to `SEEN` through the API.
 - Multipart image uploads are stored under per-user directories on the local filesystem.
 - `springdoc-openapi` exposes local Swagger/OpenAPI, and `ng-openapi-gen` generated the checked-in Angular services and models.
@@ -75,15 +76,14 @@ flowchart LR
 - One-to-one conversation creation and history
 - Real-time text and image notifications through the SockJS/STOMP subscription
 - Presence, unread counts, timestamps, and sent/seen indicators
-- Image attachments and emoji insertion
+- Image attachments and emoji interaction
 - Responsive messaging workspace
-- Accessibility basics including semantic buttons, form labels, visible focus states, and an `aria-live` message stream
 
 ## Technology Stack
 
 | Area | Technology |
 | --- | --- |
-| Frontend | Angular 22, TypeScript 6, RxJS, Bootstrap, SockJS/STOMP, Keycloak JS, `ng-openapi-gen` |
+| Frontend | Angular 22, TypeScript 6, Bootstrap, SockJS/STOMP, Keycloak JS, openapi-gen |
 | Backend | Java 17, Spring Boot 4.1, Spring MVC, Spring Security OAuth2 resource server, Spring Data JPA, Spring WebSocket, springdoc-openapi |
 | Data and infrastructure | PostgreSQL, Keycloak 26, Docker Compose, local filesystem media storage |
 
@@ -104,8 +104,7 @@ flowchart LR
 2. Open [Keycloak](http://localhost:9090) and sign in with `admin` / `admin` (development-only credentials; change them outside local development).
 3. Create a realm named `SwiftChat`.
 4. In that realm, create a public client named `SwiftChat`. Turn client authentication off, enable the standard flow, set the valid redirect URI to `http://localhost:4200/*`, and set the web origin to `http://localhost:4200`.
-5. Create at least two realm users. Supply email, first name, last name, and a non-temporary password for each.
-6. Start the backend from `SwiftChat/`:
+5. Start the backend from `SwiftChat/`:
 
    ```bash
    ./mvnw spring-boot:run
@@ -117,16 +116,20 @@ flowchart LR
    .\mvnw.cmd spring-boot:run
    ```
 
-7. In another terminal, start the frontend from `SwiftChat-UI/`:
+7. Start the frontend from `SwiftChat-UI/`:
 
    ```bash
    npm install
    npm start
    ```
 
-8. Open [http://localhost:4200](http://localhost:4200).
+   8. Open [http://localhost:4200](http://localhost:4200).
 
-PostgreSQL uses `username` / `password` as local development credentials. The backend runs on `http://localhost:8080`; Keycloak runs on `http://localhost:9090`.
+Notes:
+
+PostgreSQL uses `username` / `password` and Keycloak uses `admin` / `admin` as local development credentials.
+
+The backend runs on `http://localhost:8080`; Keycloak runs on `http://localhost:9090`.
 
 ## API Overview
 
@@ -140,8 +143,6 @@ PostgreSQL uses `username` / `password` as local development credentials. The ba
 | `POST` | `/api/v1/messages/upload-media?chatId={chatId}` | Upload and persist an image message; `chatId` is a query parameter and `file` is a multipart form field |
 | `PATCH` | `/api/v1/messages` | Mark received chat messages as seen |
 | SockJS/STOMP | `/ws` | Establish the real-time notification channel |
-
-The API table above is source-verified. `springdoc-openapi` exposes local Swagger UI/OpenAPI at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html), and `ng-openapi-gen` generated the checked-in Angular services and models.
 
 ## Repository Structure
 
