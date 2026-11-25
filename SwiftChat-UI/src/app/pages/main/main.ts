@@ -14,6 +14,9 @@ import SockJS from 'sockjs-client';
 import {Stomp} from 'stompjs/lib/stomp.js';
 import {Notification} from './notification';
 
+const TYPING_SEND_INTERVAL_MS = 2000;
+const TYPING_EXPIRY_MS = 3000;
+
 @Component({
   selector: 'app-main',
   imports: [
@@ -30,11 +33,14 @@ export class Main implements OnInit, OnDestroy, AfterViewChecked {
   chats = signal<Array<ChatResponse>>([]);
   selectedChat = signal<ChatResponse>({});
   chatMessages = signal<MessageResponse[]>([]);
+  typingChats = signal<Set<string>>(new Set<string>());
   showEmojis = signal(false);
   messageContent = ''
   socketClient: any = null;
   @ViewChild('scrollableDiv') scrollableDiv!: ElementRef<HTMLDivElement>;
   private notificationSubscription: any;
+  private typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private lastTypingSentAt = 0;
 
   constructor(
     private chatService: ChatService,
@@ -48,6 +54,8 @@ export class Main implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy(): void {
+    this.typingTimers.forEach(timer => clearTimeout(timer));
+    this.typingTimers.clear();
     if (this.socketClient !== null) {
       this.socketClient.disconnect();
       this.notificationSubscription.unsubscribe();
@@ -78,6 +86,7 @@ export class Main implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   protected chatSelected(chatResponse: ChatResponse) {
+    this.lastTypingSentAt = 0;
     this.selectedChat.set(chatResponse);
     this.chats.update(chats => chats.some(chat => chat.Id === chatResponse.Id)
       ? chats.map(chat => chat.Id === chatResponse.Id ? {...chat, unreadCount: 0} : chat)
@@ -109,6 +118,10 @@ export class Main implements OnInit, OnDestroy, AfterViewChecked {
 
   isSelfMessage(message: MessageResponse): boolean {
     return message.senderId === this.keycloakService.userId;
+  }
+
+  isTyping(chatId: string | undefined): boolean {
+    return !!chatId && this.typingChats().has(chatId);
   }
 
   protected uploadMedia(target: EventTarget | null) {
@@ -146,6 +159,20 @@ export class Main implements OnInit, OnDestroy, AfterViewChecked {
   protected onSelectEmoji(selectedEmoji: any) {
     const emoji: EmojiData = selectedEmoji.emoji;
     this.messageContent += emoji.native
+    this.onMessageInput(this.messageContent);
+  }
+
+  protected onMessageInput(value: string) {
+    const chatId = this.selectedChat().Id;
+    if (!chatId || !value.trim() || !this.socketClient?.connected) {
+      return;
+    }
+    const now = Date.now();
+    if (now - this.lastTypingSentAt < TYPING_SEND_INTERVAL_MS) {
+      return;
+    }
+    this.lastTypingSentAt = now;
+    this.socketClient.send('/app/typing', {}, JSON.stringify({chatId}));
   }
 
   protected keyDown(keyboardEvent: KeyboardEvent) {
@@ -231,6 +258,13 @@ export class Main implements OnInit, OnDestroy, AfterViewChecked {
 
   private handleNotification(notification: Notification) {
     if (!notification) return;
+    if (notification.type === 'TYPING') {
+      if (notification.chatId) this.markTyping(notification.chatId);
+      return;
+    }
+    if ((notification.type === 'MESSAGE' || notification.type === 'IMAGE') && notification.chatId) {
+      this.clearTyping(notification.chatId);
+    }
     if (this.selectedChat() && this.selectedChat().Id === notification.chatId) {
       switch (notification.type) {
         case 'MESSAGE':
@@ -275,6 +309,27 @@ export class Main implements OnInit, OnDestroy, AfterViewChecked {
         }
       }
     }
+  }
+
+  private markTyping(chatId: string) {
+    this.typingChats.update(chats => chats.has(chatId) ? chats : new Set(chats).add(chatId));
+    const timer = this.typingTimers.get(chatId);
+    if (timer) clearTimeout(timer);
+    this.typingTimers.set(chatId, setTimeout(() => this.clearTyping(chatId), TYPING_EXPIRY_MS));
+  }
+
+  private clearTyping(chatId: string) {
+    const timer = this.typingTimers.get(chatId);
+    if (timer) {
+      clearTimeout(timer);
+      this.typingTimers.delete(chatId);
+    }
+    this.typingChats.update(chats => {
+      if (!chats.has(chatId)) return chats;
+      const next = new Set(chats);
+      next.delete(chatId);
+      return next;
+    });
   }
 
   private updateChatPreview(chatId: string, lastMessage: string | undefined, incrementUnread: boolean): void {

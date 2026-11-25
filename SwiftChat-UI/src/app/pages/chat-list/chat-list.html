@@ -39,10 +39,14 @@
           <span class="row-copy">
             <span class="row-name">{{ chat.name }}</span>
             <span class="row-preview">
-              @if (chat.lastMessage === 'Attachment') {
-                <i class="fas fa-image" aria-hidden="true"></i>
+              @if (isTyping(chat.Id)) {
+                <span class="typing-copy">typing…</span>
+              } @else {
+                @if (chat.lastMessage === 'Attachment') {
+                  <i class="fas fa-image" aria-hidden="true"></i>
+                }
+                {{ wrapMessage(chat.lastMessage) }}
               }
-              {{ wrapMessage(chat.lastMessage) }}
             </span>
           </span>
           <span class="row-meta">

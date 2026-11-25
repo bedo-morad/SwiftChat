@@ -16,6 +16,7 @@
 
     <aside class="list-panel">
       <app-chat-list [chats]="chats()" [selectedChatId]="selectedChat().Id"
+                     [typingChats]="typingChats()"
                      (chatSelected)="chatSelected($event)"></app-chat-list>
     </aside>
 
@@ -57,6 +58,15 @@
               </div>
             </article>
           }
+          @if (isTyping(selectedChat().Id)) {
+            <article class="message-row typing-row" aria-label="Typing">
+              <div class="message-bubble typing-bubble" aria-hidden="true">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </div>
+            </article>
+          }
         </div>
 
         <footer class="composer">
@@ -77,6 +87,7 @@
           }
           <input class="message-input" type="text" aria-label="Message"
                  placeholder="Write a message" [(ngModel)]="messageContent"
+                 (ngModelChange)="onMessageInput($event)"
                  (keydown)="keyDown($event)" (click)="onClick()">
           @if (messageContent) {
             <button class="send-button" type="button" aria-label="Send message" title="Send"

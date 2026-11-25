@@ -153,6 +153,10 @@
   white-space: nowrap;
 }
 
+.typing-copy {
+  color: var(--swift-primary);
+}
+
 .row-meta {
   align-items: flex-end;
   gap: 6px;
