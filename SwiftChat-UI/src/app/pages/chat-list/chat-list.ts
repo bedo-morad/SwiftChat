@@ -17,6 +17,7 @@ import {KeycloakService} from '../../utils/keycloak/keycloak-service';
 export class ChatList {
   chats: InputSignal<ChatResponse[]> = input<ChatResponse[]>([]);
   selectedChatId = input<string>();
+  typingChats = input<Set<string>>(new Set<string>());
   searchNewContact = signal(false);
   contacts = signal<Array<UserResponse>>([]);
   chatSelected = output<ChatResponse>();
@@ -40,6 +41,10 @@ export class ChatList {
 
   protected chatClicked(chat: ChatResponse) {
     this.chatSelected.emit(chat);
+  }
+
+  protected isTyping(chatId: string | undefined): boolean {
+    return !!chatId && this.typingChats().has(chatId);
   }
 
   protected wrapMessage(lastMessage: string | undefined):string {
